@@ -1,7 +1,10 @@
+#!/usr/bin/env python3
+
 from os import listdir
 from os.path import isfile, join
 import re
 from pathlib import Path
+import sys
 
 def get_concepts_per_topic(concept_block):
     return re.findall(r"\[\[(.*?)\]\]", concept_block)
@@ -10,7 +13,7 @@ def strip_tag(content):
     return re.sub(r"#\w+_\d+\s*$", "", content.strip())
 
 def get_relationships(path):
-    topics_path = join(path, "Topics")
+    topics_path = Path(path) / "Topics"
 
     results = {}
 
@@ -21,11 +24,11 @@ def get_relationships(path):
             with open(file_path, "r", encoding="utf-8") as f:
                 content = f.read()
 
-            match = re.search(r"## Concepts([\s\S]*?)(?=^#)", content, re.M)
+            match = re.search(r"## Concepts([\s\S]*)", content)
 
             if match:
                 concepts = get_concepts_per_topic(match.group(1))
-                results[file.strip(".md")] = concepts
+                results[Path(file).stem] = concepts
 
     return  dict(sorted(results.items()))
 
@@ -67,7 +70,8 @@ def get_topic_overview_concepts_as_string(path, topic, topic_rels):
         all_concepts.append(cleaned)
 
     overview =  "\n\n".join(all_concepts)
-    last_dir = Path(PATH).name.strip("CSC")
+    name = Path(path).name
+    last_dir = name[3:] if name.startswith("CSC") else name
 
     tag = f"#{last_dir}_{topic_number}"
 
@@ -81,18 +85,25 @@ def run(path):
     for topic, concepts in rels.items():
         all_topic_overviews.append(get_topic_overview_concepts_as_string(path, topic, concepts))
 
-    for n in range(len(all_topic_overviews)):
-        fname = f"Topic Overview {n+1}.md"
+    for i, content in enumerate(all_topic_overviews, start=1):
+        fname = f"Topic Overview {i}.md"
         full_path = join(path, fname)
 
         with open(full_path, "w", encoding="utf-8") as f:
-            f.write(all_topic_overviews[n])
+            f.write(content)
 
-    full_path = join(path, f"{Path(PATH).name}_module_summary.md")
+    full_path = join(path, f"{Path(path).resolve().name}_module_summary.md")
 
     with open(full_path, "w", encoding="utf-8") as f:
         f.write("\n\n".join(all_topic_overviews) + "\n")
 
-PATH = "/Users/dannyhazley/Library/Mobile Documents/iCloud~md~obsidian/Documents/BSC/CSC2063"
+def main():
+    if len(sys.argv) > 1:
+        base_path = sys.argv[1]
+    else:
+        base_path = Path.cwd()
 
-run(PATH)
+    run(str(base_path))
+
+if __name__ == "__main__":
+    main()
