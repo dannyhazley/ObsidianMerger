@@ -88,6 +88,11 @@ def run(path):
         with open(full_path, "w", encoding="utf-8") as f:
             f.write(all_topic_overviews[n])
 
+    full_path = join(path, f"{Path(PATH).name}_module_summary.md")
+
+    with open(full_path, "w", encoding="utf-8") as f:
+        f.write("\n\n".join(all_topic_overviews) + "\n")
+
 PATH = "/Users/dannyhazley/Library/Mobile Documents/iCloud~md~obsidian/Documents/BSC/CSC2063"
 
 run(PATH)
