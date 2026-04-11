@@ -7,7 +7,7 @@ The following program merges Markdown files in Obsidian in order to allow for ea
 Found in `/templates`, the program works with the folder structure:
 ```bash
 └── vault
-      └── Root Folder
+     └── Root Folder
           ├── Topics
           └── Concepts
 ```
