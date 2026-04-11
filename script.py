@@ -10,7 +10,7 @@ def get_concepts_per_topic(concept_block):
     return re.findall(r"\[\[(.*?)\]\]", concept_block)
 
 def strip_tag(content):
-    return re.sub(r"#\w+_\d+\s*$", "", content.strip())
+    return re.sub(r"(?m)^#.*?_\d+\s*$", "", content).strip()
 
 def get_relationships(path):
     topics_path = Path(path) / "Topics"
@@ -57,6 +57,10 @@ def read_concept(path, concept_name):
 def prepend_title(content, title):
     return f"# {title}\n\n{content}"
 
+def normalise(content):
+    content = strip_tag(content)
+    return content.strip() + "\n"
+
 def get_topic_overview_concepts_as_string(path, topic, topic_rels):
     match = re.search(r"Topic\s*(\d+)\s*-\s*(.*)", topic)
     topic_number = match.group(1) if match else "0"
@@ -65,7 +69,7 @@ def get_topic_overview_concepts_as_string(path, topic, topic_rels):
     skipped = []
 
     topic_content = read_topic(path, topic)
-    all_concepts.append(strip_tag(topic_content))
+    all_concepts.append(normalise(topic_content))
 
     for concept_title in topic_rels:
         concept_content = read_concept(path, concept_title)
@@ -74,16 +78,17 @@ def get_topic_overview_concepts_as_string(path, topic, topic_rels):
             skipped.append(concept_title)
             continue
 
-        cleaned = strip_tag(concept_content)
+        cleaned = normalise(concept_content)
         all_concepts.append(cleaned)
 
     overview = "\n\n".join(all_concepts)
 
-    name = Path(path).name
-    last_dir = name[3:] if name.startswith("CSC") else name
+    name = Path(path).resolve().parts
+    last_dir = next((p for p in name if p.startswith("CSC")), "UNKNOWN")
+    last_dir = last_dir.replace("CSC", "")
     tag = f"#{last_dir}_{topic_number}"
 
-    return overview + "\n" + tag, skipped
+    return overview.rstrip() + "\n\n" + tag + "\n", skipped
 
 def run(path):
     rels = get_relationships(path)
