@@ -90,13 +90,17 @@ def get_topic_overview_concepts_as_string(path, topic, topic_rels):
 
     return overview.rstrip() + "\n\n" + tag + "\n", skipped
 
+def topic_sort_key(topic):
+    match = re.search(r"\d+", topic)
+    return int(match.group()) if match else 0
+
 def run(path):
     rels = get_relationships(path)
 
     all_topic_overviews = []
     skipped_map = {}
 
-    for topic, concepts in rels.items():
+    for topic, concepts in sorted(rels.items(), key=lambda x: topic_sort_key(x[0])):
         overview, skipped = get_topic_overview_concepts_as_string(path, topic, concepts)
         all_topic_overviews.append(overview)
 
